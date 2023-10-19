@@ -18,7 +18,6 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 
-
 def get_avo_classes(hybrid_class_4=True):
     '''
     Returns reference AVO classes definition
@@ -174,8 +173,15 @@ def akirichards(vp1, vs1, rho1, vp2, vs2, rho2, theta):
 st.set_page_config(page_title='AVO Explorer', layout="centered")
 
 st.title(':grey[AVO Explorer v3]')
-st.write('**:grey[aadm (2019,2023)]**')
+st.write('')
 
+st.write(
+    '''
+    Porting of my old
+    [AVO Explorer notebook](https://github.com/aadm/avo_explorer).
+
+    :grey[(aadm 2019,2023)]
+    ''')
 st.divider()
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
