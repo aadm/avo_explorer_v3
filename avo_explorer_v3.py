@@ -172,17 +172,15 @@ def akirichards(vp1, vs1, rho1, vp2, vs2, rho2, theta):
 
 st.set_page_config(page_title='AVO Explorer', layout="centered")
 
-st.title(':grey[AVO Explorer v3]')
-st.write('')
+with st.sidebar:
+    st.title(':grey[AVO Explorer v3]')
+    st.write(
+        '''
+        Porting of my old
+        [AVO Explorer notebook](https://github.com/aadm/avo_explorer).
 
-st.write(
-    '''
-    Porting of my old
-    [AVO Explorer notebook](https://github.com/aadm/avo_explorer).
-
-    :grey[(aadm 2019,2023)]
-    ''')
-st.divider()
+        (aadm 2019,2023)
+        ''')
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # widget: input elastic properties for shale and sand 
@@ -194,22 +192,18 @@ ep_ss = np.full(3, np.nan)
 ep_sh = np.full(3, np.nan)
 elastic_properties_widgets = st.columns(2, gap='medium')
 with elastic_properties_widgets[0]:
-    st.header('Shale (above)')
+    st.subheader('Shale (above)')
     ep_sh[0] = st.number_input('Vp', value=2200., **opt_vp)
     ep_sh[1] = st.number_input('Vs', value=820.,  **opt_vs)
     ep_sh[2] = st.number_input('rho', value=2.2, **opt_rho)
 with elastic_properties_widgets[1]:
-    st.header('Sand (below)')
+    st.subheader('Sand (below)')
     ep_ss[0] = st.number_input('Vp', value=1550., **opt_vp)
     ep_ss[1] = st.number_input('Vs', value=900.,  **opt_vs)
     ep_ss[2] = st.number_input('rho', value=1.9, **opt_rho)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # widget: select angle range
-
-# angle_range = st.select_slider(
-#     'Angle range', np.arange(0,50),
-#     value=[0.0, 90.0])
 
 aa = np.arange(0,91)
 angle_range = st.select_slider(
@@ -231,6 +225,7 @@ akir = st.toggle('Use Aki-Richards reflectivity equation _(default: Shuey 2-term
 plot_avoref = st.radio(
     'Select AVO reference',
     ['None', 'Brine Sand', 'Gas Sand'],
+    index = 2
     )
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
