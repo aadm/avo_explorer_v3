@@ -6,6 +6,6 @@ It does not have all the features of the old version because I have used Streaml
 
 However I managed to pack it all in a few hours; consider it as a work in progress.
 
-To launch it as an app, click here: <https://avo_explorer_v3.streamlit.app>
+To launch it as an app, click here: <https://avo-explorer-v3.streamlit.app>
 
 
