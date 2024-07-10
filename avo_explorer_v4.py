@@ -162,6 +162,11 @@ st.set_page_config(page_title='AVO Explorer', layout="centered")
 st.title(':grey[AVO Explorer v4]')
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# get elastic properties for default avo classes
+sh, ssb, ssg = get_avo_classes()
+avocl = sh.index.to_list()
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # widget: input elastic properties for shale and sand 
 
 opt_vp = dict(min_value=1500., max_value=6000., step=10., format='%.0f')
@@ -201,18 +206,10 @@ ig = False
 
 akir = st.toggle('Use Aki-Richards reflectivity equation _(default: Shuey 2-term)_')
 
-plot_avoref = st.radio(
-    'Select AVO reference',
-    ['None', 'Brine Sand', 'Gas Sand'],
-    index = 2
-    )
+avoref = st.radio('Select AVO reference', ['None', 'Brine Sand', 'Gas Sand'], index=2)
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# build reference AVO classes
-# get elastic properties for default avo classes
-sh, ssb, ssg = get_avo_classes()
+avocl = st.radio('Select AVO Class', avocl)
 
-avocl = sh.index.to_list()
 df_b = pd.DataFrame(angles, columns = ['angles'])
 df_g = pd.DataFrame(angles, columns = ['angles'])
 logs = ['VP', 'VS', 'RHO']
@@ -222,16 +219,12 @@ for cl in avocl:
     avorefsh = sh.loc[cl, logs]
     avorefssb = ssb.loc[cl, logs]
     avorefssg = ssg.loc[cl, logs]
-    if ig:
-        _, Ib, Gb = shuey(*avorefsh, *avorefssb, angles, terms=True)
-        _, Ig, Gg = shuey(*avorefsh, *avorefssg, angles, terms=True)
+    if akir:
+        df_b[cl] = akirichards(*avorefsh, *avorefssb, angles)
+        df_g[cl] = akirichards(*avorefsh, *avorefssg, angles)
     else:
-        if akir:
-            df_b[cl] = akirichards(*avorefsh, *avorefssb, angles)
-            df_g[cl] = akirichards(*avorefsh, *avorefssg, angles)
-        else:
-            df_b[cl] = shuey(*avorefsh, *avorefssb, angles)
-            df_g[cl] = shuey(*avorefsh, *avorefssg, angles)
+        df_b[cl] = shuey(*avorefsh, *avorefssb, angles)
+        df_g[cl] = shuey(*avorefsh, *avorefssg, angles)
 
 if not ig:
     df_b = df_b.melt('angles', var_name='AVO Class', value_name='Reflectivity')
