@@ -204,7 +204,9 @@ st.divider()
 ig = False
 
 
-akir = st.toggle('Use Aki-Richards reflectivity equation _(default: Shuey 2-term)_')
+# akir = st.toggle('Use Aki-Richards reflectivity equation _(default: Shuey 2-term)_')
+
+refl_eq = st.selectbox('Reflectivity equation', ['Shuey', 'Hilterman'])
 
 avoref = st.radio('Select AVO reference', ['None', 'Brine Sand', 'Gas Sand'], index=2)
 
@@ -219,22 +221,22 @@ for cl in avocl:
     avorefsh = sh.loc[cl, logs]
     avorefssb = ssb.loc[cl, logs]
     avorefssg = ssg.loc[cl, logs]
-    if akir:
-        df_b[cl] = akirichards(*avorefsh, *avorefssb, angles)
-        df_g[cl] = akirichards(*avorefsh, *avorefssg, angles)
+    if refl_eq == 'Shuey':
+        df_b[cl] = shuey(*avorefsh, *avorefssb, angles, approx=False)
+        df_g[cl] = shuey(*avorefsh, *avorefssg, angles, approx=False)
     else:
-        df_b[cl] = shuey(*avorefsh, *avorefssb, angles)
-        df_g[cl] = shuey(*avorefsh, *avorefssg, angles)
+        df_b[cl] = hilterman(*avorefsh, *avorefssb, angles)
+        df_g[cl] = hilterman(*avorefsh, *avorefssg, angles)
 
-if not ig:
-    df_b = df_b.melt('angles', var_name='AVO Class', value_name='Reflectivity')
-    df_g = df_g.melt('angles', var_name='AVO Class', value_name='Reflectivity')
 
 # calculate reflectivity from user input
 df = pd.DataFrame(angles, columns = ['angles'])
-if ig:
-    _, Iu, Gu = shuey(*ep_sh, *ep_ss, angles, terms=True)
+
+if refl_eq == 'Shuey':
+    df_b[cl] = shuey(*ep_sh, *ep_ss, angles, approx=False, terms=True, angcontrib=True)
 else:
+    df_b[cl] = hilterman(*ep_sh, *ep_ss, angles, angcontrib=True)
+    angcontrib=True
     if akir:
         df['Reflectivity'] = akirichards(*ep_sh, *ep_ss, angles)
     else:
@@ -244,51 +246,34 @@ else:
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # make plot
 
+
+def plot_rc(data, stack, histoplot):  
+    f, ax = plt.subplots()
+    # ax.axhline(R0, ls='--', color='0.5', label='NI')
+    ax.plot(ang, rcs, ls='-', lw=4, color='k',  alpha=0.5, label='[Shuey] RC')
+    ax.plot(ang, R0+t1s, ls='-', lw=2, color='r',  alpha=0.5, label='[Shuey] Near')
+    ax.plot(ang, t2s, ls='-', lw=2, color='b',  alpha=0.5, label='[Shuey] Far')
+
+    ax.plot(ang, rch, ls='--', lw=4, color='k',  alpha=0.5, label='[Hilterman] RC')
+    ax.plot(ang, t1h, ls='--', lw=2, color='r',  alpha=0.5, label='[Hilterman] Near')
+    ax.plot(ang, t2h, ls='--', lw=2, color='g',  alpha=0.5, label='[Hilterman] Mid')
+    ax.plot(ang, t3h, ls='--', lw=2, color='b',  alpha=0.5, label='[Hilterman] Far')
+    ax.legend()
+
+    
+    fig, ax = plt.subplots(figsize=(6,3))
+    ax.legend(fontsize='small')    
+    ax.set_xlim(x0, x1)
+    return fig          
+
 st.divider()
 
-# colrs = alt.Scale(range=['brown', 'olive', 'red', 'magenta'])
+
+rcs, R0, t1s, t2s = squit.avo.shuey(vp1, vs1, rho1, vp2, vs2, rho2, ang, approx=False, terms=True, angcontrib=True)
+rch, t1h, t2h, t3h = squit.avo.hilterman(vp1, vs1, rho1, vp2, vs2, rho2, ang, angcontrib=True)
 
 
-if ig:
-    source = pd.DataFrame([[Iu, Gu]], columns=['I', 'G'])
-    c0 = alt.Chart(source).mark_circle(
-        color='black',
-        size=100,
-    ).encode(
-        x=alt.X('I:Q', scale=alt.Scale(domain=[-.5, .5])),
-        y=alt.Y('G:Q', scale=alt.Scale(domain=[-.5, .5]))
-        )
-else:
-    c0 = alt.Chart(df).mark_line(
-        color='black',
-        strokeWidth=4,
-    ).encode(
-        x='angles:Q',
-        y='Reflectivity:Q')
+fig = plot_rc()
 
-    cgas = alt.Chart(df_g).mark_line(opacity=0.5).encode(
-        x='angles:Q',
-        y='Reflectivity:Q',
-        color=alt.Color('AVO Class:N'))
-        # color=alt.Color('AVO Class:N', scale=colrs))
-
-    cbri = alt.Chart(df_b).mark_line(
-        opacity=0.5,
-        strokeWidth=2,
-        strokeDash=[8,4]
-    ).encode(
-        x='angles:Q',
-        y='Reflectivity:Q',
-        color=alt.Color('AVO Class:N'))
-        # color=alt.Color('AVO Class:N', scale=colrs))
-
-
-if plot_avoref == 'Brine Sand':
-    chart = c0+cbri
-elif plot_avoref == 'Gas Sand':
-    chart = c0+cgas
-else:
-    chart = c0
-
-st.altair_chart(chart, use_container_width=True, theme="streamlit")
+st.pyplot(fig=fig, use_container_width=True)
 
